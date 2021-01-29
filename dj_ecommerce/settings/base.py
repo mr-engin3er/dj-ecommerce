@@ -45,7 +45,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     # our local apps created by startapp command
-    # 'home',
+    'home',
     # 'order',
     'product',
 

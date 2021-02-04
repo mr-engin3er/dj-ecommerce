@@ -25,14 +25,24 @@ class Product(models.Model):
     size = models.CharField(choices=SIZE_CHOICES, max_length=2)
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=2)
     label = models.CharField(choices=LABEL_CHOICES, max_length=1)
-    description = models.TextField()
     slug = models.SlugField(unique=True, editable=False)
+    description = models.TextField()
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
         return reverse('product:product', kwargs={
+            'slug': self.slug
+        })
+
+    def get_add_to_cart_url(self):
+        return reverse('order:add-to-cart', kwargs={
+            'slug': self.slug
+        })
+
+    def get_remove_from_cart_url(self):
+        return reverse('order:remove-from-cart', kwargs={
             'slug': self.slug
         })
 

@@ -40,13 +40,14 @@ THIRD_PARTY_APPS = [
     # third-party apps installed using pip
     'allauth',
     'allauth.account',
-    'allauth.socialaccount'
+    'allauth.socialaccount',
+    'crispy_forms',
 ]
 
 LOCAL_APPS = [
     # our local apps created by startapp command
     'home',
-    # 'order',
+    'order',
     'product',
 
 ]
@@ -111,12 +112,13 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'), ]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static/'), ]
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
+# FOR DJANGO ALL-AUTH
 AUTHENTICATION_BACKENDS = [
 
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -128,3 +130,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 SITE_ID = 1
+
+# FOR CRISPY FORMS
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+LOGIN_REDIRECT_URL = '/'

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block extra_content %}
+<main>
+    <div class="container">
+        <section class=" mb-4">
+            <div class="row row fadeIn">
+                <div class="col-6 offset-3">
+                    {% block body %} 
+                    {% block content %} 
+                    {% endblock content %} 
+                    {% endblock body%}
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+{% endblock extra_content %}

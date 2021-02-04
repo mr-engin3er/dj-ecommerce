@@ -8,7 +8,8 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>{% block title %}{% endblock title%}</title>
+    <title>{% block head_title %}{% endblock %}</title>
+    {% block extra_head %} {% endblock %}
     <!-- Font Awesome -->
     <link
       rel="stylesheet"
@@ -52,9 +53,32 @@
     <!-- Navbar -->
     {% include 'header.html' %}
     <!-- Navbar -->
+    <div class="mt-5 pt-4">
+      {% if messages %} {% for message in messages %}
+      <div
+        class="alert alert-{{ message.tags }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %} {% endif %}
+    </div>
+
     <!-- Extra content -->
     {% block extra_content %} {% endblock extra_content %}
     <!-- Extra content -->
+    <!-- Django all-auth -->
+    {% block extra_body %} {% endblock extra_body %}
+    <!-- Django all-auth -->
+
     <!--Footer-->
     {% include 'footer.html' %}
     <!--/.Footer-->

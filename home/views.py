@@ -7,3 +7,4 @@ from product.models import Product
 class HomeView(ListView):
     model = Product
     template_name = 'home.html'
+    paginate_by = 12

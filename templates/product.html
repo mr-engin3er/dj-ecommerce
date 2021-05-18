@@ -1,6 +1,4 @@
-{% extends 'base.html' %} 
-{% block head_title %}Product detail{% endblock head_title %}
-{% block extra_content %}
+{% extends 'base.html' %} {% block head_title %}Product detail{% endblock head_title %} {% block extra_content %}
 
 <!--Main layout-->
 <main class="mt-5 pt-4">
@@ -33,13 +31,13 @@
           {% if object.discounted_price %}
           <p class="lead">
             <span class="mr-1">
-              <del>${{ object.price}}</del>
+              <del>₹{{ object.price}}</del>
             </span>
-            <span>${{ object.discounted_price }}</span>
+            <span>₹{{ object.discounted_price }}</span>
           </p>
           {% else %}
           <p class="lead">
-            <span>${{ object.price }}</span>
+            <span>₹{{ object.price }}</span>
           </p>
           {% endif %}
 

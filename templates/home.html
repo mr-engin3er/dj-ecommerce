@@ -286,10 +286,10 @@
 
               <h5 class="font-weight-bold blue-text">
                 <strong>{% if product.discounted_price %}
-                      <del>${{ product.price}}</del>
-                      ${{ product.discounted_price }}
+                      <del>₹{{ product.price}}</del>
+                      ₹{{ product.discounted_price }}
                         {% else %}
-                        ${{ product.price }}
+                        ₹{{ product.price }}
                         {% endif %}
                 </strong>
               </h5>

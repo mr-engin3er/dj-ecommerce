@@ -5,8 +5,8 @@ from order.models import State, City
 class CheckoutForm(forms.Form):
     ADDRESS_CHOICES = (('HOME', 'Home'),
                        ('OFFICE', 'Office'))
-    PAYMENT_CHOICES = (('CREDIT/DEBIT CARD', 'Credit/Debit Cards'),
-                       ('NET BANKING', 'Net Banking'),
+    PAYMENT_CHOICES = (('STRIPE', 'Credit/Debit Cards'),
+                       ('NET-BANKING', 'Net Banking'),
                        ('UPI', 'UPI'))
 
     full_name = forms.CharField(widget=forms.TextInput(attrs={

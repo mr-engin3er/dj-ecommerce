@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
+import environ
+
+env = environ.Env()
+# reading .env file
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -19,8 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '_h%^k*ip%xobe*9_29(hq$g_q1k3&o6$c4sgp&utldif-9b0aw'
-
+SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 
 # Application definition
@@ -41,6 +45,7 @@ THIRD_PARTY_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'crispy_forms',
+    'django_extensions',
 ]
 
 LOCAL_APPS = [
@@ -48,7 +53,8 @@ LOCAL_APPS = [
     'home',
     'order',
     'product',
-
+    'payment',
+    'user',
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -98,7 +104,7 @@ WSGI_APPLICATION = 'dj_ecommerce.wsgi.application'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -118,7 +124,15 @@ AUTHENTICATION_BACKENDS = [
 
 ]
 
+# custom user model
+AUTH_USER_MODEL = 'user.User'
+
+# allauth
 SITE_ID = 1
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
 
 # FOR CRISPY FORMS
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -127,3 +141,10 @@ LOGIN_REDIRECT_URL = '/'
 
 # For Django 3.2
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+
+# For Stripe
+
+STRIPE_PUBLIC_KEY = env('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')

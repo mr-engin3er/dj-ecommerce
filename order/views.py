@@ -8,27 +8,27 @@ from django.views.generic import View
 from django.http import Http404
 from product.models import Product
 from .forms import CheckoutForm
-from .models import Order, OrderInCart, State, City, Address
+from .models import Order, ProductInCart, State, City, Address
 # Create your views here.
 
 
 class CartSummeryView(LoginRequiredMixin, View):
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         try:
-            order = Order.objects.get(user=self.request.user, ordered=False)
+            order = Order.objects.get(user=request.user, ordered=False)
             context = {
                 'order': order,
             }
-            return render(self.request, 'cart_summery.html', context)
+            return render(request, 'cart_summery.html', context)
         except ObjectDoesNotExist:
-            messages.error(self.request, "You don't have an active order.")
+            messages.error(request, "You don't have an active order.")
             return redirect("/")
 
 
 @login_required
 def add_to_cart(request, slug):
     product = get_object_or_404(Product, slug=slug)
-    add_product_to_cart, created = OrderInCart.objects.get_or_create(
+    add_product_to_cart, created = ProductInCart.objects.get_or_create(
         product=product,
         user=request.user,
         ordered=False
@@ -68,15 +68,19 @@ def remove_from_cart(request, slug):
         order = order_qs[0]
         # check if the order item is in the order
         if order.product.filter(product__slug=product.slug).exists():
-            order_in_cart = OrderInCart.objects.filter(
+            product_in_cart = ProductInCart.objects.filter(
                 product=product,
                 user=request.user,
                 ordered=False
             )[0]
-            order.product.remove(order_in_cart)
+            order.product.remove(product_in_cart)
+            product_in_cart.delete()
+            if order.product.count() == 0:
+                order.delete()
             messages.warning(
                 request, "Product removed from your cart", extra_tags='danger')
             return redirect('order:cart-summery')
+
         else:
             messages.warning(
                 request, "You don't have this product in your cart", extra_tags='danger')
@@ -90,7 +94,7 @@ def remove_from_cart(request, slug):
 @login_required
 def add_single_product_to_cart(request, slug):
     product = get_object_or_404(Product, slug=slug)
-    add_product_to_cart = OrderInCart.objects.get(
+    add_product_to_cart = ProductInCart.objects.get(
         product=product,
         user=request.user,
         ordered=False
@@ -130,18 +134,21 @@ def remove_single_product_from_cart(request, slug):
         order = order_qs[0]
         # check if the order item is in the order
         if order.product.filter(product__slug=product.slug).exists():
-            order_in_cart = OrderInCart.objects.filter(
+            product_in_cart = ProductInCart.objects.filter(
                 product=product,
                 user=request.user,
                 ordered=False
             )[0]
-            if order_in_cart.quantity > 1:
-                order_in_cart.quantity -= 1
-                order_in_cart.save()
+            if product_in_cart.quantity > 1:
+                product_in_cart.quantity -= 1
+                product_in_cart.save()
                 messages.warning(
                     request, "Product quanyity is updated", extra_tags='danger')
             else:
-                order.product.remove(order_in_cart)
+                order.product.remove(product_in_cart)
+                product_in_cart.delete()
+                if order.product.count() == 0:
+                    order.delete()
                 messages.warning(
                     request, "Product removed from your cart", extra_tags='danger')
         else:
@@ -157,17 +164,19 @@ def remove_single_product_from_cart(request, slug):
 
 
 class CheckoutView(LoginRequiredMixin, View):
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         form = CheckoutForm()
+        order = Order.objects.get(user=request.user, ordered=False)
         context = {
-            'form': form
+            'form': form,
+            'order': order
         }
-        return render(self.request, 'checkout.html', context)
+        return render(request, 'checkout.html', context)
 
-    def post(self, *args, **kwargs):
-        form = CheckoutForm(self.request.POST or None)
+    def post(self, request, *args, **kwargs):
+        form = CheckoutForm(request.POST or None)
         try:
-            order = Order.objects.get(user=self.request.user, ordered=False)
+            order = Order.objects.get(user=request.user, ordered=False)
             if form.is_valid():
                 full_name = form.cleaned_data.get('full_name')
                 mobile_number = form.cleaned_data.get('mobile_number')
@@ -183,7 +192,7 @@ class CheckoutView(LoginRequiredMixin, View):
                 payment_method = form.cleaned_data.get('payment_method')
 
                 address = Address(
-                    user=self.request.user,
+                    user=request.user,
                     full_name=full_name,
                     mobile_number=mobile_number,
                     house_number=house_number,
@@ -199,11 +208,20 @@ class CheckoutView(LoginRequiredMixin, View):
                 address.save()
                 order.address = address
                 order.save()
-                return redirect('order:checkout')
-            messages.warning(self.request, "You do not have an active order")
+                if payment_method == 'STRIPE':
+                    return redirect('payment:index', payment_option="stripe")
+                elif payment_method == 'NET-BANKING':
+                    return redirect('payment:index', payment_option="stripe")
+                if payment_method == 'UPI':
+                    return redirect('payment:index', payment_option="stripe")
+                else:
+                    messages.warning(request, "Invalid Payment Option")
+                return redirect("/")
+
+            messages.warning(request, "You do not have an active order")
             return redirect("order:checkout")
         except ObjectDoesNotExist:
-            messages.error(self.request, "You don't have an active order.")
+            messages.error(request, "You don't have an active order.")
             return redirect("/")
 
 

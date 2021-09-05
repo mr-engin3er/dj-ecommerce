@@ -71,7 +71,12 @@
       </div>
       {% endfor %} {% endif %}
     </div>
-
+    {% if form.errors %}
+    <div class="container">
+      {{ form.errors }}
+      {{ form.non_field_errors }}
+    </div>
+    {% endif %}
     <!-- Extra content -->
     {% block extra_content %} {% endblock extra_content %}
     <!-- Extra content -->

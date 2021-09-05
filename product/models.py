@@ -28,6 +28,9 @@ class Product(models.Model):
     slug = models.SlugField(unique=True, editable=False)
     description = models.TextField()
 
+    class Meta:
+        ordering = ['-id']
+
     def __str__(self):
         return self.title
 
@@ -41,13 +44,11 @@ class Product(models.Model):
             'slug': self.slug
         })
 
- 
     def get_remove_from_cart_url(self):
         return reverse('order:remove-from-cart', kwargs={
             'slug': self.slug
         })
 
-   
 
 def create_slug(instance, new_slug=None):
     slug = slugify(instance.title)
@@ -66,4 +67,3 @@ def pre_save_product_receiver(sender, instance, *args, **kwargs):
 
 
 pre_save.connect(pre_save_product_receiver, sender=Product)
-

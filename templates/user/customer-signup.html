@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Customer Signup" %}{% endblock %}
+
+{% block extra_content %}
+<main>
+    <div class="container">
+        <section class=" mb-4">
+            <div class="row row fadeIn">
+                <div class="col-6 offset-3">
+                <h1>{% trans "Sign Up" %}</h1>
+
+                <p>{% blocktrans %}Already have an account? Then please <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</p>
+
+                <form class="signup"  method="post" action="{% url 'user:customer-signup' %}">
+                    {% csrf_token %}
+                    {{ form | crispy }}
+                    <button type="submit">{% trans "Sign Up" %} &raquo;</button>
+                </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock extra_content %}

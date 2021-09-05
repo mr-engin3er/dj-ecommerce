@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.db import models
 from product.models import Product
+from payment.models import Payment
 
 # Create your models here.
 
 
-class OrderInCart(models.Model):
+class ProductInCart(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -28,10 +29,12 @@ class OrderInCart(models.Model):
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
-    product = models.ManyToManyField(OrderInCart)
+    product = models.ManyToManyField(ProductInCart)
     start_date = models.DateTimeField(auto_now_add=True)
     address = models.ForeignKey(
         'Address', on_delete=models.SET_NULL, blank=True, null=True)
+    payment = models.ForeignKey(
+        Payment, on_delete=models.SET_NULL, blank=True, null=True)
     ordered_date = models.DateTimeField()
     ordered = models.BooleanField(default=False)
 
@@ -43,6 +46,9 @@ class Order(models.Model):
         for order in self.product.all():
             total += order.get_product_total()
         return total
+
+    def stripe_price(self):
+        return int(self.get_cart_total() * 100)
 
 
 class Address(models.Model):
@@ -79,6 +85,9 @@ class City(models.Model):
     name = models.CharField(max_length=50)
     state = models.ForeignKey(
         'State', related_name='state', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name_plural = "Cities"
 
     def __str__(self):
         return self.name

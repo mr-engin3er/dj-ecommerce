@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.db import models
+from user.models import Address
 from product.models import Product
-from payment.models import Payment
+from payment.models import Coupon, Payment
 
 # Create your models here.
 
@@ -27,16 +28,28 @@ class ProductInCart(models.Model):
 
 
 class Order(models.Model):
+    order_id = models.CharField(
+        max_length=16, unique=True, blank=True, null=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
     product = models.ManyToManyField(ProductInCart)
     start_date = models.DateTimeField(auto_now_add=True)
-    address = models.ForeignKey(
-        'Address', on_delete=models.SET_NULL, blank=True, null=True)
+    shipping_address = models.ForeignKey(
+        Address, related_name="shipping_address", on_delete=models.SET_NULL, blank=True, null=True)
+    billing_address = models.ForeignKey(
+        Address, related_name="billing_address", on_delete=models.SET_NULL, blank=True, null=True)
     payment = models.ForeignKey(
         Payment, on_delete=models.SET_NULL, blank=True, null=True)
     ordered_date = models.DateTimeField()
+    coupon = models.ForeignKey(
+        Coupon, on_delete=models.SET_NULL, blank=True, null=True)
     ordered = models.BooleanField(default=False)
+    shipped = models.BooleanField(default=False)
+    in_transist = models.BooleanField(default=False)
+    out_for_delivery = models.BooleanField(default=False)
+    delivered = models.BooleanField(default=False)
+    refund_requested = models.BooleanField(default=False)
+    refund_granted = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user}"
@@ -45,49 +58,18 @@ class Order(models.Model):
         total = 0
         for order in self.product.all():
             total += order.get_product_total()
+        if self.coupon:
+            total -= self.coupon.amount
         return total
 
     def stripe_price(self):
         return int(self.get_cart_total() * 100)
 
 
-class Address(models.Model):
-    ADDRESS_CHOICES = (('HOME', 'Home'),
-                       ('OFFICE', 'Office'))
-    PAYMENT_CHOICES = (('CREDIT/DEBIT CARD', 'Credit/Debit Cards'),
-                       ('NET BANKING', 'Net Banking'),
-                       ('UPI', 'UPI'))
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
-    full_name = models.CharField(max_length=50)
-    mobile_number = models.IntegerField()
-    house_number = models.CharField(max_length=10)
-    street_name = models.CharField(max_length=50)
-    colony = models.CharField(max_length=50)
-    landmark = models.CharField(max_length=50)
-    state = models.ForeignKey(
-        'State', on_delete=models.CASCADE)
-    city = models.ForeignKey(
-        'City', related_name='city', on_delete=models.CASCADE)
-    pin_code = models.IntegerField()
-    address_type = models.CharField(choices=ADDRESS_CHOICES, max_length=10)
-    default_address = models.BooleanField(default=False)
+class ReturnOrder(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    reason = models.TextField()
+    accepted = models.BooleanField(default=False)
 
-
-class State(models.Model):
-    name = models.CharField(max_length=50)
-
-    def __str__(self):
-        return self.name
-
-
-class City(models.Model):
-    name = models.CharField(max_length=50)
-    state = models.ForeignKey(
-        'State', related_name='state', on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = "Cities"
-
-    def __str__(self):
-        return self.name
+    def __str__(self) -> str:
+        return f"{self.pk}"

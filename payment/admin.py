@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin.options import ModelAdmin
-from .models import Payment
+from .models import Payment, Coupon
 # Register your models here.
 
 
@@ -10,3 +10,4 @@ class PaymentAdmin(ModelAdmin):
 
 
 admin.site.register(Payment, PaymentAdmin)
+admin.site.register(Coupon)

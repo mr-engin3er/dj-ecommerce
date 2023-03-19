@@ -1,5 +1,8 @@
 import json
 import stripe
+import random
+import string
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -8,10 +11,11 @@ from django.http import JsonResponse, HttpResponse
 from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.shortcuts import render
-from order.models import Order, ProductInCart
+from django.shortcuts import redirect, render
+from order.models import Order, ProductInCart, ReturnOrder
 from user.models import Customer
-from .models import Payment
+from payment.forms import CouponForm, RefundForm
+from .models import Coupon, Payment
 
 
 # Get secret key from env
@@ -21,16 +25,23 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
 
+def create_order_id():
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
+
+
 class PaymentView(View):
     def get(self, request, *args, **kwargs):
         order = Order.objects.get(user=request.user, ordered=False)
-        amount = order.get_cart_total()
-        stripe_amount = order.stripe_price()
-        context = {'STRIPE_PUBLIC_KEY': settings.STRIPE_PUBLIC_KEY,
-                   "amount": amount,
-                   "stripe_amount": stripe_amount
-                   }
-        return render(self.request, "payment.html", context)
+        if order.shipping_address:
+            amount = order.get_cart_total()
+            stripe_amount = order.stripe_price()
+            context = {'STRIPE_PUBLIC_KEY': settings.STRIPE_PUBLIC_KEY,
+                       "amount": amount,
+                       "stripe_amount": stripe_amount
+                       }
+            return render(self.request, "payment.html", context)
+        messages.warning(request, "Can't checkout without address.")
+        return redirect("order:checkout")
 
 
 # stripe intent view for custom form checkout
@@ -69,30 +80,30 @@ class StripeIntentView(View):
             # Since it's a decline, stripe.error.CardError will be caught
             body = e.json_body
             err = body.get('error', {})
-            messages.error(request, f"{err.get('messages')}")
+            messages.warning(request, f"{err.get('messages')}")
             return JsonResponse({'error': str(e)})
 
         except stripe.error.RateLimitError as e:
             # Too many requests made to the API too quickly
-            messages.error(request, "Rate Limit Error")
+            messages.warning(request, "Rate Limit Error")
         except stripe.error.InvalidRequestError as e:
             # Invalid parameters were supplied to Stripe's API
-            messages.error(request, "Invalid request error")
+            messages.warning(request, "Invalid request error")
             return JsonResponse({'error': str(e)})
 
         except stripe.error.AuthenticationError as e:
             # Authentication with Stripe's API failed
             # (maybe you changed API keys recently)
-            messages.error(request, "Not Authenticated")
+            messages.warning(request, "Not Authenticated")
         except stripe.error.APIConnectionError as e:
             # Network communication with Stripe failed
-            messages.error(request, "Network error")
+            messages.warning(request, "Network error")
             return JsonResponse({'error': str(e)})
 
         except stripe.error.StripeError as e:
             # Display a very generic error to the user, and maybe send
             # yourself an email
-            messages.error(
+            messages.warning(
                 request, "Something went wrong. You were not charged. Please try again")
             return JsonResponse({'error': str(e)})
 
@@ -100,7 +111,7 @@ class StripeIntentView(View):
             # Something else happened, completely unrelated to Stripe
             # send an email to ourselves
             print(e)
-            messages.error(
+            messages.warning(
                 request, "A serious error occurred. We have been notified")
             return JsonResponse({'error': str(e)})
 
@@ -111,6 +122,7 @@ def success(request):
 # stripe webhook to get event while payment
 
 
+@require_POST
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
@@ -173,6 +185,7 @@ def stripe_webhook(request):
         # fullfill order
         order.ordered = True
         order.payment = payment
+        order.order_id = create_order_id()
         order.save()
         product_qs = ProductInCart.objects.filter(
             user=user, ordered=False).order_by('id')
@@ -199,3 +212,61 @@ def stripe_webhook(request):
 
     # Passed signature verification
     return HttpResponse(status=200)
+
+
+def __get_coupon(request, code):
+    try:
+        coupon = Coupon.objects.get(code=code)
+        return coupon
+    except ObjectDoesNotExist:
+        messages.warning(request, "Invalid coupon code.", extra_tags="danger")
+
+
+def add_coupon(request):
+    if request.method == 'POST':
+        form = CouponForm(request.POST or None)
+        if form.is_valid():
+            try:
+                code = form.cleaned_data.get('code')
+                order = Order.objects.get(user=request.user, ordered=False)
+                order.coupon = __get_coupon(request, code)
+                order.save()
+                messages.warning(request, "Successfully added coupon.",
+                                 extra_tags="success")
+                return redirect("order:checkout")
+            except ObjectDoesNotExist:
+                messages.warning(request, "You don't have any order.",
+                                 extra_tags="danger")
+                return redirect("order:checkout")
+    messages.warning(request, "Something went wrong!",
+                     extra_tags="danger")
+    return redirect("order:checkout")
+
+
+def return_request(request):
+    if request.method == 'POST':
+        form = RefundForm(request.POST or None)
+        if form.is_valid():
+            order_id = form.cleaned_data.get('order_id')
+            message = form.cleaned_data.get('message')
+            try:
+                order = Order.objects.get(order_id=order_id)
+                order.refund_requested = True
+                order.save()
+                return_order = ReturnOrder()
+                return_order.order = order
+                return_order.reason = message
+                return_order.save()
+                messages.info(
+                    request, "You've requested for return. We'll notify you by Email.", extra_tags='info')
+                return redirect('payment:return-request')
+            except ObjectDoesNotExist:
+                messages.warning(
+                    request, "Order not found for return.", extra_tags='info')
+                return redirect('payment:return-request')
+
+    form = RefundForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'return_request.html', context)

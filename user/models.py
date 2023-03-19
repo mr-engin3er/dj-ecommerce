@@ -59,3 +59,49 @@ class Customer(models.Model):
 
     def __str__(self) -> str:
         return self.user.email
+
+
+class Address(models.Model):
+    TYPE_CHOICES = ((1, 'Home'),
+                    (2, 'Office'))
+    user = models.ForeignKey(User,
+                             on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=50)
+    mobile_number = models.IntegerField()
+    house_number = models.CharField(max_length=10)
+    street_name = models.CharField(max_length=50)
+    colony = models.CharField(max_length=50)
+    landmark = models.CharField(max_length=50)
+    state = models.ForeignKey(
+        'State',  on_delete=models.CASCADE)
+    city = models.ForeignKey(
+        'City', related_name='city', on_delete=models.CASCADE)
+    pin_code = models.IntegerField()
+    address_type = models.PositiveSmallIntegerField(
+        choices=TYPE_CHOICES)
+    default_address = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name_plural = 'Addresses'
+
+        def __str__(self):
+            return self.user
+
+
+class State(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+
+class City(models.Model):
+    name = models.CharField(max_length=50)
+    state = models.ForeignKey(
+        'State', related_name='state', related_query_name='state', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name_plural = "Cities"
+
+    def __str__(self):
+        return self.name

@@ -5,10 +5,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.views.generic import View
-from django.http import Http404
 from product.models import Product
+from payment.forms import CouponForm
+from user.models import City, Address
 from .forms import CheckoutForm
-from .models import Order, ProductInCart, State, City, Address
+from .models import Order, ProductInCart
 # Create your views here.
 
 
@@ -21,7 +22,7 @@ class CartSummeryView(LoginRequiredMixin, View):
             }
             return render(request, 'cart_summery.html', context)
         except ObjectDoesNotExist:
-            messages.error(request, "You don't have an active order.")
+            messages.warning(request, "You don't have an active order.")
             return redirect("/")
 
 
@@ -165,55 +166,47 @@ def remove_single_product_from_cart(request, slug):
 
 class CheckoutView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        form = CheckoutForm()
         order = Order.objects.get(user=request.user, ordered=False)
+        form = CheckoutForm()
+        coupon = CouponForm()
         context = {
             'form': form,
-            'order': order
+            'order': order,
+            'coupon': coupon
         }
+        addresses = Address.objects.filter(
+            user=request.user)
+        context.update({"addresses": addresses})
         return render(request, 'checkout.html', context)
 
     def post(self, request, *args, **kwargs):
         form = CheckoutForm(request.POST or None)
         try:
             order = Order.objects.get(user=request.user, ordered=False)
+            print('-------> form', form.data)
             if form.is_valid():
-                full_name = form.cleaned_data.get('full_name')
-                mobile_number = form.cleaned_data.get('mobile_number')
-                house_number = form.cleaned_data.get('house_number')
-                street_name = form.cleaned_data.get('street_name')
-                colony = form.cleaned_data.get('colony')
-                landmark = form.cleaned_data.get('landmark')
-                state = form.cleaned_data.get('state')
-                city = form.cleaned_data.get('city')
-                pin_code = form.cleaned_data.get('pin_code')
-                address_type = form.cleaned_data.get('address_type')
-                default_address = form.cleaned_data.get('default_address')
+                shipping_address = form.cleaned_data.get('shipping_address')
+                print('-------- form.cleaned_data', form.cleaned_data)
+                same_billing_address = form.cleaned_data.get(
+                    'same_billing_address')
+                if same_billing_address:
+                    billing_address = shipping_address
+                else:
+                    billing_address = form.cleaned_data.get('billing_address')
+
                 payment_method = form.cleaned_data.get('payment_method')
 
-                address = Address(
-                    user=request.user,
-                    full_name=full_name,
-                    mobile_number=mobile_number,
-                    house_number=house_number,
-                    street_name=street_name,
-                    colony=colony,
-                    landmark=landmark,
-                    state=state,
-                    city=city,
-                    pin_code=pin_code,
-                    address_type=address_type,
-                    default_address=default_address
-                )
-                address.save()
-                order.address = address
+                order.shipping_address = Address.objects.get(
+                    id=shipping_address)
+                order.billing_address = Address.objects.get(id=billing_address)
+
                 order.save()
                 if payment_method == 'STRIPE':
-                    return redirect('payment:index', payment_option="stripe")
+                    return redirect('payment:option', payment_option="stripe")
                 elif payment_method == 'NET-BANKING':
-                    return redirect('payment:index', payment_option="stripe")
+                    return redirect('payment:option', payment_option="stripe")
                 if payment_method == 'UPI':
-                    return redirect('payment:index', payment_option="stripe")
+                    return redirect('payment:option', payment_option="stripe")
                 else:
                     messages.warning(request, "Invalid Payment Option")
                 return redirect("/")
@@ -221,7 +214,7 @@ class CheckoutView(LoginRequiredMixin, View):
             messages.warning(request, "You do not have an active order")
             return redirect("order:checkout")
         except ObjectDoesNotExist:
-            messages.error(request, "You don't have an active order.")
+            messages.warning(request, "You don't have an active order.")
             return redirect("/")
 
 

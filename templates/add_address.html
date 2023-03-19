@@ -1,0 +1,149 @@
+{% extends 'base.html' %}  
+{% load crispy_forms_tags %} 
+{% block head_title%}Add Address{% endblock head_title %}   
+{% block extra_content %}
+<div class="container">
+  {{ form.errors }}
+  {{ form.non_field_errors }}
+</div>
+<!--Main layout-->
+<main class="">
+  <div class="container wow fadeIn">
+    <!-- Heading -->
+    <h2 class="my-5 h2 text-center">Checkout form</h2>
+    <!--Grid row-->
+    <div class="row">
+
+      <!--Grid column-->
+      <div class="col-md-11 mb-5">
+
+        <!--Card-->
+        <div class="card">
+
+
+        <form method="POST" class="card-body" id="addressForm" data-cities-url="{% url "order:load-cities" %}">
+                    {% csrf_token %}
+                      <div class="row">
+                        <!--full name-->
+                        <div class="col-md-6 mb-2">
+                          <div class="md-form ">
+                            {{ form.full_name}}
+                          </div>
+                        </div>
+                        <!--mobile-->
+                        <div class="col-md-6 mb-2">
+                          <div class="md-form ">
+                            {{ form.mobile_number }}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row">
+                        <!--House number-->
+                        <div class="col-md-6 mb-2">
+                          <div class="md-form ">
+                            {{ form.house_number}}
+                          </div>
+                        </div>
+                        <!--Street name-->
+                        <div class="col-md-6 mb-2">
+                          <div class="md-form ">
+                            {{ form.street_name }}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row">
+                        <!--Colony-->
+                        <div class="col-md-6 mb-2">
+                          <div class="md-form ">
+                            {{ form.colony}}
+                          </div>
+                        </div>
+                        <!--Landmark-->
+                        <div class="col-md-6 mb-2">
+                          <div class="md-form ">
+                            {{ form.landmark }}
+                          </div>
+                        </div>
+                      </div>
+                      <!--Grid row-->
+                      <div class="row">
+                        <!--State-->
+                        <div class="col-md-4 col-12 mb-4">
+                          <div class="mb-2">
+                            {{ form.state.label }}
+                          </div>
+                          {{ form.state }}
+                        </div>
+                        <!--City-->
+                        <div class="col-md-4 col-12 mb-4">
+                          <div class="mb-2">
+                            {{ form.city.label }}
+                          </div>
+                          {{ form.city }}
+                        </div>
+                        <!--Pin code-->
+                        <div class="col-md-4 col-12 mb-4">
+                          <div class="mb-2">
+                            {{ form.pin_code.label }}
+                          </div>
+                          {{ form.pin_code }}
+                        </div>
+                      </div>
+                  
+                       <div class="d-block my-3">
+                        {{form.address_type.label}}
+                        {% for value,name in form.fields.address_type.choices  %}
+                        <div class="form-check form-check-inline">
+                          <input id="{{name}}" name="address_type" value="{{value}}" type="radio" class="form-check-input"
+                            required>
+                          <label class="form-check-label" for="{{name}}">{{name}}</label>
+                        </div>
+                        {% endfor %}
+                      </div>
+
+                      <div class="custom-control custom-checkbox">
+                        {{form.default}}
+                        <label class="custom-control-label" for="default">Set as Default address</label>
+                      </div>
+                      <hr>
+                      <button class="btn btn-primary btn-lg btn-block" >Save address</button>
+
+        </form>
+
+        <!--Card-->
+        </div>
+      <!--Grid column-->
+
+      </div>
+    <!--Grid row-->
+
+    </div>
+  </div>
+</main>
+{% endblock extra_content %} 
+
+{% block extra_scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+  crossorigin="anonymous"></script>
+<script>
+  $("#state").change(function () {
+    var url = $("#addressForm").attr("data-cities-url"); // get the url of the `load_cities` view
+    var StateId = $(this).val(); // get the selected state ID from the HTML input
+
+    $.ajax({ // initialize an AJAX request
+      url: url, // set the url of the request (= localhost:8000/order/load-cities/)
+      data: {
+        'state': StateId // add the state id to the GET parameters
+      },
+      success: function (data) { // `data` is the return of the `load_cities` view function
+        $("#city").html(
+        data); // replace the contents of the city input with the data that came from the server
+      }
+    });
+
+  });
+
+</script>
+{% endblock extra_scripts %}

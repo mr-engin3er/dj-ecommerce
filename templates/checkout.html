@@ -1,219 +1,124 @@
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
-{% block head_title %}Checkout{% endblock head_title %}
+{% extends 'base.html' %} 
+{% load crispy_forms_tags %} 
+{% block head_title%}Checkout{% endblock head_title %} 
 {% block extra_content %}
-<div class="container">
-  {{ form.errors }}
-  {{ form.non_field_errors }}
-</div>
+<div class="container">{{ form.errors }} {{ form.non_field_errors }}</div>
 <!--Main layout-->
 <main class="">
   <div class="container wow fadeIn">
     <!-- Heading -->
     <h2 class="my-5 h2 text-center">Checkout form</h2>
-    <div class="col-8">
-    </div>
+
     <!--Grid row-->
     <div class="row">
-
       <!--Grid column-->
       <div class="col-md-8 mb-4">
-
         <!--Card-->
         <div class="card">
-
           <!--Card content-->
-          <form method="POST" class="card-body" id="checkoutForm" data-cities-url="{% url "order:load-cities" %}">
-
+          <form method="POST" class="card-body">
             {% csrf_token %}
+            <h3>Choose Shipping Address</h3>
 
-            <div class="row">
-              <!--full name-->
-              <div class="col-md-6 mb-2">
-                <div class="md-form ">
-                  {{ form.full_name}}
-                </div>
-              </div>
-              <!--mobile-->
-              <div class="col-md-6 mb-2">
-                <div class="md-form ">
-                  {{ form.mobile_number }}
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <!--House number-->
-              <div class="col-md-6 mb-2">
-                <div class="md-form ">
-                  {{ form.house_number}}
-                </div>
-              </div>
-              <!--Street name-->
-              <div class="col-md-6 mb-2">
-                <div class="md-form ">
-                  {{ form.street_name }}
-                </div>
-              </div>
+            {% for shipping in addresses %}
+            <!-- Default radio -->
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                id = "{{shipping}}"
+                type="radio"
+                name="shipping_address"
+                value = {{shipping.id}}
+              />
+              <label class="form-check-label" for="{{shipping}}">
+                {{shipping.full_name}}, {{shipping.house_number}},
+                {{shipping.street_name}}
+              </label>
             </div>
 
-            <div class="row">
-              <!--Colony-->
-              <div class="col-md-6 mb-2">
-                <div class="md-form ">
-                  {{ form.colony}}
-                </div>
-              </div>
-              <!--Landmark-->
-              <div class="col-md-6 mb-2">
-                <div class="md-form ">
-                  {{ form.landmark }}
-                </div>
-              </div>
-            </div>
-            <!--Grid row-->
-            <div class="row">
-              <!--State-->
-              <div class="col-md-4 col-12 mb-4">
-                <div class="mb-2">
-                  {{ form.state.label }}
-                </div>
-                {{ form.state }}
-              </div>
-              <!--City-->
-              <div class="col-md-4 col-12 mb-4">
-                <div class="mb-2">
-                  {{ form.city.label }}
-                </div>
-                {{ form.city }}
-              </div>
-              <!--Pin code-->
-              <div class="col-md-4 col-12 mb-4">
-                <div class="mb-2">
-                  {{ form.pin_code.label }}
-                </div>
-                {{ form.pin_code }}
-              </div>
-            </div>
-            <hr>
+            {% endfor %}
 
-            <div class="d-block my-3">
-              {{form.address_type.label}}
-              {% for value, name  in form.fields.address_type.choices  %}
-              <div class="custom-control custom-radio">
-                <input id="{{name}}" name="address_type" value="{{value}}" type="radio" class="custom-control-input"
-                  required>
-                <label class="custom-control-label" for="{{name}}">{{name}}</label>
-              </div>
-              {% endfor %}
-            </div>
-            <hr>
+            <hr />
+
             <div class="custom-control custom-checkbox">
-              {{form.default_address}}
-              <label class="custom-control-label" for="default_address">Set as Default address</label>
+              {{form.same_billing_address}}
+              <label class="custom-control-label" for="same_billing_address"
+                >Billing address is same as shipping</label
+              >
             </div>
-            <hr>
 
+            <div class="hidable_billing">
+            <hr />
+            <h3>Choose Billing Address</h3>
+              <hr />
+              {% for billing in addresses %}
+              <!-- Default radio -->
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  id= "{{billing}}"
+                  type="radio"
+                  name="billing_address"
+                  value = {{billing.id}}
+                />
+                <label class="form-check-label" for="{{billing}}">
+                  {{billing.full_name}}, {{billing.house_number}},
+                  {{billing.street_name}}
+                </label>
+              </div>
+
+              {% endfor %}
+
+            </div>
+            <hr />
+            <h3>Payment Options</h3>
             <div class="d-block my-3">
-              {{form.payment_method.label}}
-              {% for value,name in form.fields.payment_method.choices  %}
+              {{form.payment_method.label}} 
+              {% for value,name in form.fields.payment_method.choices %}
               <div class="custom-control custom-radio">
-                <input id="{{name}}" name="payment_method" value="{{value}}" type="radio" class="custom-control-input"
-                  required>
-                <label class="custom-control-label" for="{{name}}">{{name}}</label>
+                <input
+                  id="{{name}}"
+                  name="payment_method"
+                  value="{{value}}"
+                  type="radio"
+                  class="custom-control-input"
+                  required
+                />
+                <label class="custom-control-label" for="{{name}}"
+                  >{{name}}</label
+                >
               </div>
               {% endfor %}
             </div>
-            <hr class="mb-4">
-            <button class="btn btn-primary btn-lg btn-block" >Continue to checkout</button>
-
+            <hr class="mb-4" />
+            <button class="btn btn-primary btn-lg btn-block" type="submit">
+              Continue to checkout
+            </button>
           </form>
-
         </div>
         <!--/.Card-->
-
       </div>
       <!--Grid column-->
 
-     
-      <!--Grid column-->
-      <div class="col-md-4 mb-4">
-
-        <!-- Heading -->
-        <h4 class="d-flex justify-content-between align-items-center mb-3">
-          <span class="text-muted">Your cart</span>
-          <span class="badge badge-secondary badge-pill">{{ order.product.count }}</span>
-        </h4>
-
-        <!-- Cart -->
-        <ul class="list-group mb-3 z-depth-1">
-        {% for product_in_cart in order.product.all %}
-          <li class="list-group-item d-flex justify-content-between lh-condensed">
-            <div>
-              <h6 class="my-0">{{ product_in_cart.quantity}} x {{ product_in_cart.product.title|truncatewords:3}}</h6>
-              <small class="text-muted">{{ product_in_cart.product.description|truncatewords:5 }}</small>
-            </div>
-            <span class="text-muted">{{ product_in_cart.get_product_total|floatformat }}</span>
-          </li>
-         
-       {% endfor %}
-          <li class="list-group-item d-flex justify-content-between bg-light">
-            <div class="text-success">
-              <h6 class="my-0">Promo code</h6>
-              <small>EXAMPLECODE</small>
-            </div>
-            <span class="text-success">-₹5</span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between">
-            <span>Total (INR))</span>
-            <strong>₹{{ order.get_cart_total|floatformat}}</strong>
-          </li>
-        </ul>
-        <!-- Cart --> 
-
-        <!-- Promo code -->
-        <form class="card p-2">
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Promo code" aria-label="Recipient's username"
-              aria-describedby="basic-addon2">
-            <div class="input-group-append">
-              <button class="btn btn-secondary btn-md waves-effect m-0" type="button">Redeem</button>
-            </div>
-          </div>
-        </form>
-        <!-- Promo code --> 
-
-       
-      </div> 
-      <!--Grid column-->
-
+      {% include 'order_snippet.html' %}
     </div>
     <!--Grid row-->
-
   </div>
 </main>
 <!--Main layout-->
 
 {% endblock extra_content %}
+
 {% block extra_scripts %}
-<script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
-  crossorigin="anonymous"></script>
-<script>
-  $("#state").change(function () {
-    var url = $("#checkoutForm").attr("data-cities-url"); // get the url of the `load_cities` view
-    var stateId = $(this).val(); // get the selected state ID from the HTML input
-
-    $.ajax({ // initialize an AJAX request
-      url: url, // set the url of the request (= localhost:8000/order/load-cities/)
-      data: {
-        'state': stateId // add the state id to the GET parameters
-      },
-      success: function (data) { // `data` is the return of the `load_cities` view function
-        $("#city").html(
-        data); // replace the contents of the city input with the data that came from the server
-      }
-    });
-
-  });
-</script>
+{% comment %} <script>
+var hidable_billing = $('.hidable_billing');
+var same_billing_address = document.querySelector('input[name=same_billing_address]');
+same_billing_address.addEventListener('change', function(){
+  if(this.checked){
+    hidable_billing.hide();
+  }else{
+    hidable_billing.show();
+  }
+})
+</script> {% endcomment %}
 {% endblock extra_scripts %}

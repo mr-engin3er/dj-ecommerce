@@ -53,6 +53,16 @@
                 </tr> 
                 {% endfor %} 
                 {% if order.get_cart_total %}
+                    {% if order.coupon %}
+                    <tr>    
+                        <th></th>
+                        <td colspan="3" class=""><b>Coupon discount</b></td>
+                        <td colspan="2" class="">
+                             <b>  - {{order.coupon.amount}}</b>
+                        </td>
+                    </tr>
+                    {% endif %}
+
                     <tr>
                         <th></th>
                         <td colspan="3" class=""><b>Cart total</b></td>
@@ -60,14 +70,18 @@
                     </tr> 
                     <tr>
                         <th></th>
-                        <td colspan="4" class="">
+                        <td colspan="5" class="">
+
                         <a href="{% url "order:checkout" %}" class="btn btn-warning float-right ml-2">Proceed to checkout</a>
                         <a href="/" class="btn btn-primary float-right ">Continue shopping</a>
                         </td>
                     </tr> 
+
                 {% endif %}
                 </tbody>
+
             </table>
+
         </div>
     </div>
 </main>
